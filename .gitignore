@@ -1,0 +1,17 @@
+/consumer/target
+/consumer/.idea
+/consumer/*.iws
+/consumer/*.iml
+/consumer/*.ipr
+consumer/commodity_trade_statistics_data.csv
+/consumer/commodity_trade_statistics_data.csv
+
+/producer/target
+/producer/.idea
+/producer/*.iws
+/producer/*.iml
+/producer/*.ipr
+
+commodity_trade_statistics_data.csv
+
+
