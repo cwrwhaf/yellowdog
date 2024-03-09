@@ -14,4 +14,7 @@ consumer/commodity_trade_statistics_data.csv
 
 commodity_trade_statistics_data.csv
 
-
+.idea
+*.iws
+*.iml
+*.ipr
