@@ -143,6 +143,7 @@ The only way i can think of mitigating this is to supply a key based on the aggr
 - Could test with csv files with blank values just to make sure we can handle this but as ive decided this isn't the best solution and it's a coding exercise ive ommitted these tests
 
 ### KafkaProducerService
+- I always wonder what the point of these sorts of tests actually test but this was the most popular way to test the kafka template without creating an embedded server
 
 ### AggregatedListener
 
