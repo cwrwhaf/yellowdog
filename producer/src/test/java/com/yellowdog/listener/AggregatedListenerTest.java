@@ -3,7 +3,7 @@ package com.yellowdog.listener;
 import org.springframework.boot.test.context.SpringBootTest;
 
 @SpringBootTest
-class ProducerApplicationTests {
+class AggregatedListenerTest {
 //
 //	@Test
 //	void contextLoads() {

@@ -1,16 +1,8 @@
 
 docker-compose up -d
-docker-compose exec kafka ./opt/kafka/bin/kafka-topics.sh --bootstrap-server localhost:9092 --create --if-not-exists --topic my-topic-1 --replication-factor 1 --partitions 1
-
 
 docker-compose exec kafka ./opt/kafka/bin/kafka-topics.sh --create --topic global-commodity-trade-statistics-raw --bootstrap-server localhost:9092
 docker-compose exec kafka ./opt/kafka/bin/kafka-topics.sh --create --topic global-commodity-trade-statistics-aggregated --bootstrap-server localhost:9092
-
-
-docker-compose exec kafka ./opt/kafka/bin/kafka-console-producer.sh --topic general-task-topic --bootstrap-server localhost:9092
-
-
-docker-compose exec kafka ./opt/kafka/bin/kafka-console-consumer.sh --topic general-task-topic --from-beginning --bootstrap-server localhost:9092
 
 
 docker-compose down -v  

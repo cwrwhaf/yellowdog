@@ -64,35 +64,14 @@ public class CommodityDataStreamListener {
 
         KStream<String, CommodityDataDto> commodityDataKStream = streamsBuilder.stream(inTopic, Consumed.with(Serdes.String(), jsonSerde));
 
-        // Grouping Ratings
         KGroupedStream<String, Long> dataByCountry = commodityDataKStream
-                .map((key, data) -> new KeyValue<>(data.getCountryOrArea(), data.getTradeUsd()))
+                .map((key, data) -> new KeyValue<>(data.getCountryOrArea() + " : "+data.getFlow(), data.getTradeUsd()))
                 .groupByKey(with(String(), Long()));
 
-//TODO add an aggregate type for json
         KTable<String, Long> dataAggregated = dataByCountry.aggregate(() -> 0l,
                 (key, value, aggregate) -> value + aggregate,
                 Materialized.with(String(), Long()));
 
-
-//
-//        dataByCountry.aggregate(
-//                            () -> 0l,
-//                            this::aggregate,
-//                            Materialized.<String, Long, KeyValueStore<Bytes, byte[]>>as("PRODUCT_AGGREGATED_SALES")
-//                                    .withKeySerde(Serdes.String())
-//                                    .withValueSerde(Serdes.Long())
-//                                    .withCachingDisabled()
-//                    );
-
-
-
-
-
-
-
-
-      //  dataAggregated.toStream().to(outTopic);
 
         dataAggregated
                 .mapValues(((key, value) -> new Aggregation(key, value)))
@@ -102,17 +81,6 @@ public class CommodityDataStreamListener {
                 Serdes.serdeFrom(new JsonSerializer<Aggregation>(), new JsonDeserializer<Aggregation>()))
         );
 
-        System.out.println("got here");
     }
 
-    private Long aggregate(String key, String value, Long aggregate) {
-        try {
-            ObjectMapper objectMapper = new ObjectMapper();
-            Aggregation aggregation = objectMapper.readValue(value, Aggregation.class);
-            return aggregate + aggregation.getAggregatedTradeUsd();
-        } catch (JsonProcessingException e) {
-            // Ignore this event
-            return aggregate;
-        }
-    }
 }
