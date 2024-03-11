@@ -7,7 +7,7 @@ Ive written this application in one folder for ease of sharing. Each folder work
 ### Start docker
 - cd docker
 - docker-compose up -d
-### With the apache image i cant get the networks to work. Its in the listener and advertised listener config. My attempts are commented out in the compose file
+### Start topics manually - With the apache image i cant get the networks to work. Its in the listener and advertised listener config. My attempts are commented out in the compose file
 - docker-compose exec kafka ./opt/kafka/bin/kafka-topics.sh --create --topic global-commodity-trade-statistics-raw --bootstrap-server localhost:9092
 - docker-compose exec kafka ./opt/kafka/bin/kafka-topics.sh --create --topic global-commodity-trade-statistics-aggregated --bootstrap-server localhost:9092
 
