@@ -5,25 +5,28 @@ Ive written this application in one folder for ease of sharing. Each folder work
 ## Run the application
 
 ### Start docker
-- cd docker
-- docker-compose up -d
-### Start topics manually - With the apache image i cant get the networks to work. Its in the listener and advertised listener config. My attempts are commented out in the compose file
-- docker-compose exec kafka ./opt/kafka/bin/kafka-topics.sh --create --topic global-commodity-trade-statistics-raw --bootstrap-server localhost:9092
-- docker-compose exec kafka ./opt/kafka/bin/kafka-topics.sh --create --topic global-commodity-trade-statistics-aggregated --bootstrap-server localhost:9092
-
+``` 
+cd docker
+docker-compose up -d
+```
 
 ### Start producer
-- cd producer
-- ./mvnw spring-boot:run
+```
+cd producer
+./mvnw spring-boot:run
+```
 
 ### Trigger file ingestion
-- (path is visible to the application. In this case the file is in the root of the project)
-- curl --location --request GET 'http://localhost:8080/import?path=commodity_trade_statistics_data.csv&topic=global-commodity-trade-statistics-raw'
+- NB path needs to be visible to the application. In this case the file is in the root of the project
+```
+curl --location --request GET 'http://localhost:8080/import?path=commodity_trade_statistics_data.csv&topic=global-commodity-trade-statistics-raw'
+```
 
 ### Start consumer
-- cd consumer
-- ./mvnw spring-boot:run
-- output from producer listener
+```
+cd consumer
+./mvnw spring-boot:run
+```
 
 ## Example Output
 ```#0-0-C-1] c.yellowdog.listener.AggregatedListener  : Country: [Canada : Re-Import] Aggregated Trade: [475111542799]
@@ -38,7 +41,7 @@ Ive written this application in one folder for ease of sharing. Each folder work
 2024-03-10T14:29:08.789Z  INFO 32310 --- [ntainer#0-0-C-1] c.yellowdog.listener.AggregatedListener  : Country: [China : Re-Import] Aggregated Trade: [7334078301009]
 2024-03-10T14:29:08.789Z  INFO 32310 --- [ntainer#0-0-C-1] c.yellowdog.listener.AggregatedListener  : Country: [China : Import] Aggregated Trade: [160783247934200]
 2024-03-10T14:29:08.790Z  INFO 32310 --- [ntainer#0-0-C-1] c.yellowdog.listener.AggregatedListener  : Country: [China : Export] Aggregated Trade: [171620731940135]
-2024-03-10T14:29:08.790Z  INFO 32310 --- [ntainer#0-0-C-1] c.yellowdog.listener.AggregatedListener  : Country: [China, Hong Kong SAR : Re-Import] Aggregated Trade: [10224915176]```
+2024-03-10T14:29:08.790Z  INFO 32310 --- [ntainer#0-0-C-1] c.yellowdog.listener.AggregatedListener  : Country: [China, Hong Kong SAR : Re-Import] Aggregated Trade: [10224915176]
 ```
 
 # Assignment
@@ -49,18 +52,17 @@ Apache Kafka streaming platform.*
 - Chose to go with apache/kafka:3.7.0 as its the official image. I figured plain vanilla would be better for a coding exercise.
 There are a number of proprietary images which make it easier to create queues but one of them `wurstmeister/zookeeper` is already obsolete. 
 I chose the KRaft configuration as they are deprecating the zookeeper configuration.
-Ive used as much out of the box config as possible as this is a coding exercise using
+Ive used as much out of the box config as possible as this is a coding exercise. Using
 `KAFKA_PROCESS_ROLES: broker,controller` which is the recomended configuration for a development setup
+- Using compose.yml for speed, to use a dockerfile i would reference that in the compose.yml file and pass in the queue name
 
 
 *Within the dockerfile include configuration that will also
 create a single topic in kafka with a name of your choice. Don’t waste time looking at
 scalability or security of this service.*
-- As stated above i can't get the admin client to connect to the broker to create the queue. 
-- Or the service times out before it can create
-- Or i create a topic but i cant connect via the applicaton.
-- There is a confluent image that makes it easier which i probably shouldve gone with
-- I also had to create another topic for the stream to work to send back to the producer
+
+topic `global-commodity-trade-statistics-raw` is created in the docker compose file and
+topic `global-commodity-trade-statistics-aggregated` is created by the application
 
 ## Step 2 – Development (Part 1)
 *Write a single threaded producer application in Java which processes the csv formatted
@@ -83,7 +85,7 @@ The endpoint accepts a path to a file on the local filesystem which needs to be 
 *Write a consumer application in a language of your choice (it could be Java again) which
 subscribes to your kafka topic and aggregates this data, reporting totals to the producer on
 the import and export for each country_or_area in usd.*
-- Went with kafka streams for this requirement becuase it makes it easy to aggregate data and pass on to another topic
+- Went with spring kafka streams for this requirement becuase it makes it easy to aggregate data and pass on to another topic
 
 *Extend the producer application to output the totals once all data has been processed.*
 - Used spring kafka `@KafkaHandler`
@@ -92,6 +94,7 @@ the import and export for each country_or_area in usd.*
 *1) Clarify any assumptions you made whilst building the solution above.*
 - Assuming a local file is acceptable for this assignment. This solution could be extended to pull the file from a url, unzip the file locally and pass the path to the rest of the application. I wrote with this in mind so we can easily extend it if needed.
 - Assuming it's fine to use spring kafka based on the requirement to use well known and maintained libraries.
+
 
 *2) Explain any questions would you have asked if you’d had the opportunity.*
 - How are we triggering the file ingestion? 
@@ -121,7 +124,8 @@ There is a line reader class in there but using this only saved 30 seconds and r
 
 *5) Assess the quality of your code and explain any improvements you might make given
    more time.*
-- I think this is still a way from production code and by far the largest tech test ive ever had to do, that said here are my thoughts on where i would improve. 
+
+I think this is still a way from production code and by far the largest tech test ive ever had to do, that said here are my thoughts on where i would improve. 
 - First thing to address is the dtos, Ive copied and pasted the dtos to the same package in each project. These need to be extracted to a shared resource. I did it this way for speed of development.
 - I would like to spend a bit more time working out the error handling in kafka.
 - Currently im printing as soon as i get the result, would look nicer if i waited until the stream was fully ingested before printing out, I think configuring and waiting for an idle event? 
@@ -147,6 +151,5 @@ The only way i can think of mitigating this is to supply a key based on the aggr
 ### KafkaProducerService
 - I always wonder what the point of these sorts of tests actually test but this was the most popular way to test the kafka template without creating an embedded server
 
-### AggregatedListener
-
 ### CommodityDataStreamListener
+- Testing the aggregation logic is correct

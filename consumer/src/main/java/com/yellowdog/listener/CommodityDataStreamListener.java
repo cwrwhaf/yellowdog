@@ -1,14 +1,9 @@
-package com.yellowdog.config;
+package com.yellowdog.listener;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.DeserializationContext;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.yellowdog.dto.Aggregation;
 import com.yellowdog.dto.CommodityDataDto;
-import org.apache.kafka.common.serialization.Deserializer;
 import org.apache.kafka.common.serialization.Serde;
 import org.apache.kafka.common.serialization.Serdes;
-import org.apache.kafka.common.serialization.Serializer;
 //
 
 import org.apache.kafka.streams.KeyValue;
@@ -31,41 +26,25 @@ import static org.apache.kafka.streams.kstream.Grouped.with;
 @EnableKafkaStreams
 public class CommodityDataStreamListener {
 
-
     @Value("${yellowdog.raw.topic}")
     private String inTopic;
 
     @Value("${yellowdog.aggregated.topic}")
     private String outTopic;
 
+    private final Serde<CommodityDataDto> commodityDataJsonSerde;
 
-//    @Bean(name = DEFAULT_STREAMS_CONFIG_BEAN_NAME)
-//    public KafkaStreamsConfiguration kafkaStreamsConfig() {
-//        var props = new HashMap<String, Object>();
-//        props.put(StreamsConfig.APPLICATION_ID_CONFIG, "kafka-stream-item");
-//        props.put(StreamsConfig.BOOTSTRAP_SERVERS_CONFIG, "localhost:9092");
-//        props.put(StreamsConfig.DEFAULT_KEY_SERDE_CLASS_CONFIG,
-//                Serdes.String().getClass().getName());
-//        props.put(StreamsConfig.DEFAULT_VALUE_SERDE_CLASS_CONFIG,
-//                Serdes.String().getClass().getName());
-//        return new KafkaStreamsConfiguration(props);
-//    }
-
+    public CommodityDataStreamListener(Serde<CommodityDataDto> commodityDataJsonSerde) {
+        this.commodityDataJsonSerde = commodityDataJsonSerde;
+    }
 
     @Autowired
     public void kStream(StreamsBuilder streamsBuilder) {
 
-        JsonDeserializer<CommodityDataDto> jsonDeserializer = new JsonDeserializer<>();
-        jsonDeserializer.addTrustedPackages("com.yellowdog.dto");
-
-        JsonSerializer<CommodityDataDto> jsonSerializer = new JsonSerializer();
-
-        Serde<CommodityDataDto> jsonSerde = Serdes.serdeFrom(jsonSerializer, jsonDeserializer);
-
-        KStream<String, CommodityDataDto> commodityDataKStream = streamsBuilder.stream(inTopic, Consumed.with(Serdes.String(), jsonSerde));
+        KStream<String, CommodityDataDto> commodityDataKStream = streamsBuilder.stream(inTopic, Consumed.with(Serdes.String(), commodityDataJsonSerde));
 
         KGroupedStream<String, Long> dataByCountry = commodityDataKStream
-                .map((key, data) -> new KeyValue<>(data.getCountryOrArea() + " : "+data.getFlow(), data.getTradeUsd()))
+                .map((key, data) -> new KeyValue<>(data.getCountryOrArea() + " : " + data.getFlow(), data.getTradeUsd()))
                 .groupByKey(with(String(), Long()));
 
         KTable<String, Long> dataAggregated = dataByCountry.aggregate(() -> 0l,
@@ -77,9 +56,9 @@ public class CommodityDataStreamListener {
                 .mapValues(((key, value) -> new Aggregation(key, value)))
                 .toStream()
                 .to(outTopic, Produced.with(
-                Serdes.String(),
-                Serdes.serdeFrom(new JsonSerializer<Aggregation>(), new JsonDeserializer<Aggregation>()))
-        );
+                        Serdes.String(),
+                        Serdes.serdeFrom(new JsonSerializer<Aggregation>(), new JsonDeserializer<Aggregation>()))
+                );
 
     }
 
