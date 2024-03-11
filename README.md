@@ -7,7 +7,7 @@ Ive written this application in one folder for ease of sharing. Each folder work
 ### Start docker
 - cd docker
 - docker-compose up -d
-# TODO if cant get topics working:
+### With the apache image i cant get the networks to work. Its in the listener and advertised listener config. My attempts are commented out in the compose file
 - docker-compose exec kafka ./opt/kafka/bin/kafka-topics.sh --create --topic global-commodity-trade-statistics-raw --bootstrap-server localhost:9092
 - docker-compose exec kafka ./opt/kafka/bin/kafka-topics.sh --create --topic global-commodity-trade-statistics-aggregated --bootstrap-server localhost:9092
 
@@ -56,9 +56,11 @@ Ive used as much out of the box config as possible as this is a coding exercise 
 *Within the dockerfile include configuration that will also
 create a single topic in kafka with a name of your choice. Don’t waste time looking at
 scalability or security of this service.*
-
-# TODO Struggling to get this to work with the official image- tbc may supply the confluence image afterall
-
+- As stated above i can't get the admin client to connect to the broker to create the queue. 
+- Or the service times out before it can create
+- Or i create a topic but i cant connect via the applicaton.
+- There is a confluent image that makes it easier which i probably shouldve gone with
+- I also had to create another topic for the stream to work to send back to the producer
 
 ## Step 2 – Development (Part 1)
 *Write a single threaded producer application in Java which processes the csv formatted
